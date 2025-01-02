@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href='https://fonts.googleapis.com/css2?family=Aldrich&display=swap' rel='stylesheet'>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <title>3D Car Viewer</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 200vh;
+      /* Two sections */
+      width: 100%;
+      background-color: black;
+      /* Main background */
+      font-family: 'Aldrich', sans-serif;
+      /* Default font */
+      scroll-behavior: smooth;
+      /* Smooth scrolling */
+      overflow: hidden;
+      /* Hide scrollbar*/
+    }
+
+    /* Grid background */
+    .grid-background {
+      background:
+        linear-gradient(to right, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+      background-size: 40px 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      position: relative;
+      flex-direction: column;
+    }
+
+    /* Title style */
+    .viewer-title {
+      font-size: 30px;
+      color: white;
+      margin-bottom: 20px;
+      width: 350px;
+      position: absolute;
+      /* Position inside the viewer */
+      left: 2%;
+      z-index: 3;
+      top: 0%;
+    }
+
+    .viewer-title2 {
+      font-size: 28px;
+      color: white;
+      margin-bottom: 20px;
+      width: 500px;
+      position: absolute;
+      /* Position inside the viewer */
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 3;
+      top: 20px;
+    }
+
+    /* Spline Viewer */
+    spline-viewer {
+      width: 100vw;
+      height: 100vh;
+      border-radius: 10px;
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+      z-index: 2;
+    }
+
+    /* Button styles */
+    .scroll-button {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      font-size: 16px;
+      color: white;
+      background-color: #444;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      z-index: 4;
+    }
+
+    .scroll-button:hover {
+      background-color: #666;
+    }
+
+
+
+    /* Modal styles */
+    .modal {
+      display: none;
+      /* Initially hidden */
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+
+    }
+
+    .modal-content {
+      display: flex;
+      /* Changed to flex to show content */
+      justify-content: center;
+      gap: 20px;
+      transform: scale(0.95);
+      /* Start small */
+      transition: transform 6s ease-out, opacity 6s ease-out;
+      /* Smooth transition */
+    }
+
+    .modal .big-image {
+      margin-top: 200px;
+      width: 800px;
+      height: 400px;
+      border-radius: 10 px;
+      transition: transform 0.5s ease-in-out;
+      /* Smooth transition when hovering and unhovering */
+    }
+
+    .modal .big-image:hover {
+      transform: scale(1.2);
+    }
+
+    .modal .small-images_a,
+    .small-images_b {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .modal .small-images_a img,
+    .modal .small-images_b img {
+      width: 150px;
+      height: 150px;
+      border-radius: 10px;
+      object-fit: cover;
+      transition: transform 0.4s ease;
+      /* Smooth transition */
+    }
+
+    .modal .small-images_a img:hover,
+    .modal .small-images_b img:hover {
+      border: 2px solid black;
+      transform: scale(1.5);
+    }
+
+    /* Additional hover effects for small images */
+    .modal .small-images_a img:hover {
+      transform: scale(1.5) rotate(-5deg);
+    }
+
+    .modal .small-images_b img:hover {
+      transform: scale(1.5) rotate(5deg);
+    }
+
+    /* Bottom Section */
+    .bottom-section {
+      height: 100vh;
+      background:
+        linear-gradient(to right, rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+      background-size: 40px 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      color: white;
+      font-size: 24px;
+      position: relative;
+    }
+
+    .bottom-section .go-to-top {
+      position: absolute;
+      bottom: 20px;
+    }
+
+    .modal p {
+      top: 60px;
+      font-size: 40px;
+    }
+
+    .loading {
+      position: fixed;
+      /* Change from absolute to fixed */
+      top: 60px;
+      right: 6px;
+      transform: translate(-50%, -50%);
+      /* Adjust for center alignment */
+      border: 5px solid white;
+      /* Light grey */
+      border-top: 4px solid #444;
+      /* Spinner color */
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      /* Spinning animation */
+      display: none;
+      /* Initially hidden */
+      z-index: 5000;
+      /* Ensure it appears above other elements */
+    }
+
+    /* Keyframes for spinning animation */
+    @keyframes spin {
+      0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+      }
+
+      100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+      }
+    }
+
+    .working {
+      position: absolute;
+      top: 27%;
+      left: 2%;
+      width: 210px;
+      /* Set the width */
+      height: auto;
+      /* Maintain aspect ratio */
+      transition: transform 0.3s ease;
+      /* Add a hover effect */
+      z-index: 5;
+    }
+
+    .working:hover {
+      filter: invert(1);
+    }
+
+    .working2 {
+      position: absolute;
+      top: 10%;
+      left: 2%;
+      width: 160px;
+      /* Set the width */
+      height: auto;
+      /* Maintain aspect ratio */
+      transition: transform 0.3s ease;
+      /* Add a hover effect */
+      z-index: 5;
+    }
+
+    .working2:hover {
+      filter: invert(1);
+    }
+
+    .Car {
+      position: absolute;
+      font-size: 300px;
+      color: rgba(255, 255, 255, 0.8);
+      top: -280px;
+      right: 5%;
+    }
+
+    /* Background blur overlay */
+    .blur-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(5px);
+      z-index: 1000;
+      display: none;
+      /* Hidden by default */
+    }
+
+    /* Container for the big and small circles */
+    .circle-container {
+      position: fixed;
+      width: 400px;
+      height: 400px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transform: translate(328%, 210px);
+      z-index: 2000;
+      transition: transform 0.2s ease-in-out;
+    }
+
+    /* On hover, change the position */
+    .circle-container:hover {
+      transform: translate(310%, 210px);
+    }
+
+
+
+    /* Container for the small circles */
+    .small-circles-container {
+      position: absolute;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      pointer-events: none;
+      /* Hidden until clicked */
+      opacity: 0;
+      transition: opacity 0.5s ease;
+    }
+
+    /* Individual small circle */
+    .small-circle {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background-color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 20px;
+      opacity: 0;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      pointer-events: auto;
+      /* Ensure clickable */
+    }
+
+    .small-circle:hover {
+      background-color: rgba(255, 255, 255, 0.8);
+      color: black;
+    }
+
+    .small-circle i:hover {
+      transform: rotateZ(-360deg);
+      transition: transform 0.6s ease-out;
+    }
+
+    /* Show small circles */
+    .small-circles-container.show {
+      opacity: 1;
+    }
+
+
+
+    /* Custom pop-up modal */
+    #customPopup {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: white;
+      padding: 20px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      border-radius: 10px;
+      width: 300px;
+      text-align: center;
+      z-index: 2000;
+      /* Ensure it stays above everything */
+    }
+
+    /* Popup buttons */
+    .popup-button {
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      margin-top: 10px;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    .popup-button:hover {
+      background-color: #45a049;
+    }
+
+    /* Close button for pop-up */
+    .popup-close {
+      position: absolute;
+      top: 5px;
+      right: 10px;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+
+    .cover {
+      position: fixed;
+      bottom: 0%;
+      right: 0%;
+      width: 16%;
+      height: 12.5%;
+      z-index: 1000;
+      background-color: black;
+      color: white;
+      font-size: 20px;
+      border: 2px solid white;
+
+    }
+
+    .cover p {
+      position: absolute;
+      top: 5%;
+      left: 5%;
+    }
+
+    .cover img {
+      width: 25%;
+      height: 100%;
+      position: absolute;
+      right: 0%;
+      transform: scale(1.5) translateY(-15%) translateX(-15%);
+      box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+
+    /* Big Circle */
+    .big-circle {
+      position: absolute;
+      width: 200px;
+      height: 200px;
+      border-top-left-radius: 50%;
+      border-bottom-left-radius: 50%;
+      background-color: #333;
+      transition: all 0.3s ease;
+      z-index: 201;
+      color: white;
+      border: 2px solid black;
+    }
+
+    /* Icon inside the big circle */
+    .big-circle i {
+      position: absolute;
+      top: 45%;
+      left: 15%;
+      font-size: 25px;
+      transition: transform 0.6s ease-in-out;
+      /* Transition for the rotation */
+    }
+
+    /* Hover effect for the icon inside the big circle */
+    .big-circle:hover i {
+      transform: rotate(180deg);
+      /* Rotate the icon on hover */
+    }
+
+    /* Reset the icon's transform when not hovered */
+    .big-circle i {
+      transform: rotate(0deg);
+      /* Ensure it starts at 0 degrees */
+    }
+
+    /* Smooth transition for the icon when not hovered */
+    .big-circle i {
+      transition: transform 0.2s ease-in-out;
+      /* Ensure smooth transition */
+    }
+
+    .circle-container:hover .big-circle i {
+      transform: rotate(180deg);
+    }
+
+    .big-circle span {
+      transform: rotate(0deg);
+      font-size: 24px;
+      position: absolute;
+      left: 100px;
+      top: 40px;
+      display: block;
+      text-align: center;
+      writing-mode: vertical-lr;
+      text-orientation: upright;
+      line-height: 1.2;
+      /* Adjust spacing between letters */
+      font-family: 'Ubuntu Mono', monospace;
+      /* Add the font */
+      pointer-events: none;
+    }
+
+    /*-----------------------------------------------------------------------Audio MAX*/
+    .audio-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: fixed;
+      width: 300px;
+      margin: 0 auto;
+
+      bottom: 80px;
+      left: 39.5%;
+      z-index: 1000;
+    }
+
+    .audio-container button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 24px;
+      color: #4CAF50;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .audio-container button:hover {
+      color: #45a049;
+      transform: scale(1.2);
+    }
+
+    .disc-icon {
+      font-size: 50px;
+      color: #ce1a19;
+      margin: 0 20px;
+      animation: spin 2s linear infinite;
+      transition: color 0.3s ease;
+    }
+
+    .paused .disc-icon {
+      animation: none;
+      color: #ccc;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Reset button rotation animation */
+    @keyframes rotate-reset {
+      0% {
+        transform: rotate(360deg);
+      }
+
+      100% {
+        transform: rotate(0deg);
+      }
+    }
+
+    /* Show buttons on hover */
+    .audio-container:hover button {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Hide opposite button dynamically */
+    .audio-container.left-hover button.right {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .audio-container.right-hover button.left {
+      opacity: 0;
+      pointer-events: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="cover" id="cover"><img src="cu_logo.png">
+    <p>#Project for<BR>EXPO 2025</p>
+  </div>
+  <div class="loading" id="loading"></div>
+  <audio id="audioPlayer" src="bgMusic.mp3" loop></audio>
+  <div class="audio-container" id="audioContainer">
+    <button class="left" id="muteButton">
+      <i class="fa-solid fa-volume-high" id="muteIcon"></i>
+    </button>
+    <i class="fa-solid fa-compact-disc disc-icon" id="discIcon"></i>
+    <button class="right" id="resetButton">
+      <i class="fa-solid fa-arrow-rotate-left"></i>
+    </button>
+  </div>
+
+  <div class="blur-overlay" id="blurOverlay"></div>
+  <div class="circle-container" id="circleContainer">
+    <div class="big-circle" id="bigCircle"><i class="fa-solid fa-angles-left"></i><span>LINKS</span></div>
+    <div class="small-circles-container" id="smallCirclesContainer">
+
+      <div class="small-circle" title="What more can be there?"></div>
+
+      <div class="small-circle" data-link="mailto:Ranbirkhurana195@gmail.com" title="email now">
+        <i class="fa-regular fa-envelope"></i>
+      </div>
+
+      <div class="small-circle" onclick="scrollToBottom()" title="Check the Controlar details">
+        <i class="fa-solid fa-angles-down"></i>
+      </div>
+      <div class="small-circle" onclick="showModal(2)" title="Check the controlar design and parts">
+        <i class="fa-solid fa-gamepad"></i>
+      </div>
+
+      <div class="small-circle" onclick="showModal(3)" title="Check advantages of the project">
+        <i class="fa-duotone fa-solid fa-handshake"></i>
+      </div>
+
+      <div class="small-circle" onclick="showModal(1)" title="Check the car design and parts">
+        <i class="fa-solid fa-car-rear"></i>
+      </div>
+      <div class="small-circle" onclick="scrollToTop()" title="Check the car details">
+        <i class="fa-solid fa-angles-up"></i>
+      </div>
+
+      <div class="small-circle" data-link="tel:+91-9041107458" title="Call Now">
+        <i class="fa-solid fa-headset"></i>
+      </div>
+
+      <div class="small-circle" title="What more can be there?"></div>
+    </div>
+  </div>
+
+  <div id="customPopup">
+    <span class="popup-close" id="popupClose">&times;</span>
+    <h3>Choose an Action</h3>
+    <button class="popup-button" id="copyLinkButton">
+      <i class="fa-regular fa-copy"></i> Copy Link
+    </button>
+    <button class="popup-button" id="goToLinkButton">
+      <i class="fa-solid fa-arrow-up-right-from-square"></i> Go to Link
+    </button>
+  </div>
+
+  <!-- Top Section -->
+  <div class="grid-background" id="top-section">
+    <p class="viewer-title"><span style="Font-size: 42px;">Hand Gesture Controlled</span> Robot using Arduino</p>
+
+    <p class="Car">CAR</p>
+
+    <script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.54/build/spline-viewer.js"></script>
+    <spline-viewer id="spline-viewer" hint loading-anim-type="spinner-small-dark"
+      url="https://prod.spline.design/fup58r2LykBEurVq/scene.splinecode">
+    </spline-viewer>
+
+    <img src="About_car_pics\working.png" alt="Working Image" class="working">
+
+    <button class="scroll-button" onclick="scrollToBottom()">Visit Remote Model</button>
+
+  </div>
+
+  <!-- Bottom Section -->
+  <div class="bottom-section">
+    <p class="Car" style="left: 200px;">Remote</p>
+
+    <script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.54/build/spline-viewer.js"></script>
+    <spline-viewer url="https://prod.spline.design/eFTHgjVV9NL0jcHY/scene.splinecode"></spline-viewer>
+
+    <img src="About_rem_pics\working.png" alt="Working Image" class="working2">
+
+    <button class="scroll-button go-to-top" onclick="scrollToTop()">Visit Car Model</button>
+  </div>
+
+  <!-- Modal Section for the First Section -->
+  <div class="modal" id="image-modal" onclick="hideModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()"> <!-- Prevent modal close on clicking inside -->
+      <div class="small-images_a">
+        <img src="About_car_pics\1.png" alt="Image 1">
+        <img src="About_car_pics\2.png" alt="Image 2">
+        <img src="About_car_pics\3.png" alt="Image 3">
+        <img src="About_car_pics\4.png" alt="Image 4">
+      </div>
+      <p class="viewer-title2">Materials and Layout</p>
+      <img src="About_car_pics\M.png" alt="Big Image" class="big-image">
+      <div class="small-images_b">
+        <img src="About_car_pics\5.png" alt="Image 5">
+        <img src="About_car_pics\6.png" alt="Image 6">
+        <img src="About_car_pics\7.png" alt="Image 7">
+        <img src="About_car_pics\8.png" alt="Image 8">
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Section for the Second Section -->
+  <div class="modal" id="image-modal-2" onclick="hideModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()"> <!-- Prevent modal close on clicking inside -->
+      <div class="small-images_a">
+        <img src="About_car_pics\1.png" alt="Image 1">
+        <img src="About_car_pics\2.png" alt="Image 2">
+        <img src="About_car_pics\3.png" alt="Image 3">
+        <img src="About_car_pics\4.png" alt="Image 4">
+      </div>
+      <p class="viewer-title2">Materials and Layout</p>
+      <img src="About_car_pics\M.png" alt="Big Image" class="big-image">
+      <div class="small-images_b">
+        <img src="About_car_pics\5.png" alt="Image 5">
+        <img src="About_car_pics\6.png" alt="Image 6">
+        <img src="About_car_pics\7.png" alt="Image 7">
+        <img src="About_car_pics\8.png" alt="Image 8">
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="image-modal-3" onclick="hideModal(event)">
+    <div class="modal-content" onclick="event.stopPropagation()"> <!-- Prevent modal close on clicking inside -->
+      <div class="small-images_a"></div>
+
+      <p class="viewer-title2" style="left : 450px;">Advantages Revealed</p>
+
+      <img src="About_car_pics\M.png" alt="Big Image" class="big-image">
+      <div class="small-images_b"></div>
+    </div>
+  </div>
+
+  <script>
+    // Scroll functions
+    function scrollToBottom() {
+      document.getElementById('loading').style.display = 'block';
+      setTimeout(function () {
+        window.scrollTo({
+          top: document.body.scrollHeight,
+          behavior: 'smooth'
+        });
+        document.getElementById('loading').style.display = 'none';
+      }, 1000);
+    }
+
+    function scrollToTop() {
+      document.getElementById('loading').style.display = 'block';
+      setTimeout(function () {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+        document.getElementById('loading').style.display = 'none';
+      }, 1000);
+    }
+
+    // Modal functions with loading indicator
+    function showModal(section) {
+      // Show the loading message
+      document.getElementById('loading').style.display = 'block';
+
+      // Delay showing the images by 1 second
+      setTimeout(function () {
+        // Hide the loading message
+        document.getElementById('loading').style.display = 'none';
+
+        // Hide both modals first
+        document.getElementById('image-modal').style.display = 'none';
+        document.getElementById('image-modal-2').style.display = 'none';
+        document.getElementById('image-modal-3').style.display = 'none';
+
+        // Show the appropriate modal based on the section
+        if (section === 1) {
+          const modal = document.getElementById('image-modal');
+          modal.style.display = 'flex';
+          modal.style.background = 'rgba(0, 0, 0, 0.5)'; // Set background for modal 1
+        } else if (section === 2) {
+          const modal = document.getElementById('image-modal-2');
+          modal.style.display = 'flex';
+          modal.style.background = 'rgba(0, 0, 0, 0.5)'; // Set background for modal 2
+        } else if (section === 3) {
+          const modal = document.getElementById('image-modal-3');
+          modal.style.display = 'flex';
+          modal.style.background = 'rgba(0, 0, 0, 0.5)'; // Set background for modal 2
+        }
+      }, 1500); // 1-second delay
+    }
+
+    function hideModal(event) {
+      if (event.target === document.getElementById('image-modal') || event.target === document.getElementById('image-modal-2') || event.target === document.getElementById('image-modal-3')) {
+        document.getElementById('image-modal').style.display = 'none'; // Hide the first modal
+        document.getElementById('image-modal-2').style.display = 'none'; // Hide the second modal
+        document.getElementById('image-modal-3').style.display = 'none'; // Hide the third modal
+        customPopup.style.display = 'none';
+        blurOverlay.style.display = 'none';
+        hideSmallCircles();
+      }
+    }
+
+    // Ensure both modals are hidden on page load
+    window.onload = function () {
+      document.getElementById('image-modal').style.display = 'none';
+      document.getElementById('image-modal-2').style.display = 'none';
+      document.getElementById('image-modal-3').style.display = 'none';
+    };
+
+    function hideSmallCircles() {
+      const smallCircles = document.querySelectorAll('.small-circle');
+      const smallCirclesContainer = document.getElementById('smallCirclesContainer');
+      const blurOverlay = document.getElementById('blurOverlay');
+      const customPopup = document.getElementById('customPopup');
+      smallCircles.forEach((circle, index) => {
+        document.getElementById('loading').style.display = 'block';
+        setTimeout(() => {
+          circle.style.opacity = '0';
+          if (index === smallCircles.length - 1) {
+            smallCirclesContainer.style.display = 'none'; // Make them unclickable
+          }
+          document.getElementById('loading').style.display = 'none';
+        }, index * 80);
+      });
+      smallCirclesContainer.classList.remove('show');
+      customPopup.style.display = 'none';
+      blurOverlay.style.display = 'none';
+      isVisible = false;
+    }
+
+
+
+    function initializeInteractiveCircles() {
+      const bigCircle = document.getElementById('bigCircle');
+      const smallCirclesContainer = document.getElementById('smallCirclesContainer');
+      const smallCircles = document.querySelectorAll('.small-circle');
+      const blurOverlay = document.getElementById('blurOverlay');
+      const customPopup = document.getElementById('customPopup');
+      const popupClose = document.getElementById('popupClose');
+      const copyLinkButton = document.getElementById('copyLinkButton');
+      const goToLinkButton = document.getElementById('goToLinkButton');
+      let currentLink = '';
+      let isVisible = false;
+      let hideTimeout;
+
+      // Function to calculate position of small circles based on big circle's position
+      function positionSmallCircles() {
+        const numberOfCircles = smallCircles.length;
+        const radius = 150; // Radius for the circle around the big circle
+        const angleIncrement = 180 / (numberOfCircles - 1); // Dividing the semicircle evenly
+        smallCircles.forEach((circle, index) => {
+          const angle = 90 + (angleIncrement * index); // Start at 90 degrees for the left edge
+          const xPos = Math.cos(angle * (Math.PI / 180)) * radius; // Negative X for left side
+          const yPos = Math.sin(angle * (Math.PI / 180)) * radius; // Y coordinate
+          circle.style.transform = `translate(-50%, -50%) translate(${xPos}px, ${yPos}px)`; // Set position
+        });
+      }
+
+      // Function to show small circles
+      function showSmallCircles() {
+        document.getElementById('loading').style.display = 'block'; // Show loading indicator
+        smallCirclesContainer.style.display = 'block'; // Make them visible and clickable
+        smallCirclesContainer.classList.add('show');
+
+        // Animate the small circles
+        smallCircles.forEach((circle, index) => {
+          setTimeout(() => {
+            circle.style.opacity = '1';
+            // Hide loading indicator only after the last circle is shown
+            if (index === smallCircles.length - 1) {
+              document.getElementById('loading').style.display = 'none'; // Hide loading indicator
+            }
+          }, index * 150);
+        });
+
+        blurOverlay.style.display = 'block';
+        isVisible = true;
+
+        // Set a timeout to hide the circles if not hovered
+        resetHideTimeout();
+      }
+
+      // Function to hide small circles
+      function hideSmallCircles() {
+        clearTimeout(hideTimeout); // Clear any existing timeout
+        document.getElementById('loading').style.display = 'block'; // Show loading indicator
+        // Animate hiding the small circles
+        smallCircles.forEach((circle, index) => {
+          setTimeout(() => {
+            circle.style.opacity = '0';
+            if (index === smallCircles.length - 1) {
+              smallCirclesContainer.style.display = 'none'; // Make them unclickable
+              document.getElementById('loading').style.display = 'none'; // Hide loading indicator
+            }
+          }, index * 100);
+        });
+
+        smallCirclesContainer.classList.remove('show');
+        blurOverlay.style.display = 'none';
+        isVisible = false;
+      }
+
+      // Function to reset the hide timeout
+      function resetHideTimeout() {
+        clearTimeout(hideTimeout);
+        hideTimeout = setTimeout(() => {
+          hideSmallCircles();
+          customPopup.style.display = 'none';
+        }, 10000); // Adjust the time as needed (2000 ms = 2 seconds)
+      }
+
+      // Show or hide small circles on big circle click
+      bigCircle.addEventListener('click', () => {
+        if (isVisible) {
+          hideSmallCircles();
+        } else {
+          showSmallCircles();
+        }
+      });
+
+      // Open the pop-up when a small circle with a link is clicked
+      smallCircles.forEach(circle => {
+        circle.addEventListener('click', (e) => {
+          const link = e.target.closest('.small-circle').getAttribute('data-link');
+          if (link) {
+            currentLink = link;
+            customPopup.style.display = 'block';
+            blurOverlay.style.display = 'block';
+          }
+        });
+      });
+
+      // Close the pop-up
+      popupClose.addEventListener('click', () => {
+        customPopup.style.display = 'none';
+        blurOverlay.style.display = 'none';
+        hideSmallCircles();
+      });
+
+      // Copy the link to the clipboard
+      copyLinkButton.addEventListener('click', () => {
+        navigator.clipboard.writeText(currentLink).then(() => {
+          alert('Link copied to clipboard!');
+        });
+      });
+
+      // Redirect to the link
+      goToLinkButton.addEventListener('click', () => {
+        window.open(currentLink, '_blank');
+      });
+
+      // Hide everything on click outside pop-up and circles
+      blurOverlay.addEventListener('click', () => {
+        hideSmallCircles();
+        customPopup.style.display = 'none';
+      });
+
+      // Add mouseenter and mouseleave events to reset the hide timeout
+      smallCirclesContainer.addEventListener('mouseenter', () => {
+        clearTimeout(hideTimeout); // Clear the timeout if hovering
+      });
+
+      smallCirclesContainer.addEventListener('mouseleave', () => {
+        resetHideTimeout(); // Reset the timeout when not hovering
+      });
+
+      // Call positionSmallCircles to ensure small circles are placed correctly
+      positionSmallCircles();
+    }
+
+    // Initialize the functionality on page load
+    document.addEventListener('DOMContentLoaded', initializeInteractiveCircles);
+
+    function initializeAudioPlayer() {
+      const audio = document.getElementById('audioPlayer');
+      const discIcon = document.getElementById('discIcon');
+      const muteButton = document.getElementById('muteButton');
+      const muteIcon = document.getElementById('muteIcon');
+      const resetButton = document.getElementById('resetButton');
+      const audioContainer = document.getElementById('audioContainer');
+  
+      // Initial state variables
+      let isMuted = false;
+  
+      // Function to disable buttons
+      function disableButtons() {
+          muteButton.disabled = true;
+          resetButton.disabled = true;
+          muteButton.style.color = '#ccc';
+          resetButton.style.color = '#ccc';
+          discIcon.style.color = '#ccc';
+      }
+  
+      // Function to enable buttons
+      function enableButtons() {
+          muteButton.disabled = false;
+          resetButton.disabled = false;
+          muteButton.style.color = '#ce1a19';
+          resetButton.style.color = '#ce1a19';
+          discIcon.style.color = '#ce1a19';
+      }
+  
+      // Function to gradually increase volume
+      function graduallyIncreaseVolume() {
+          let volume = 0.0;
+          audio.volume = volume;
+          const interval = setInterval(() => {
+              if (volume < 1) {
+                  volume += 0.05; // Increase volume by small increments
+                  audio.volume = volume;
+                  updateMuteIcon();
+              } else {
+                  clearInterval(interval);
+              }
+          }, 200); // Increment every 200ms
+      }
+  
+      // Function to update mute button icon and title based on volume
+      function updateMuteIcon() {
+          if (audio.volume === 0 || isMuted) {
+              muteIcon.className = 'fa-solid fa-volume-xmark'; // Mute icon
+              muteButton.title = 'Muted'; // Update title
+          } else if (audio.volume < 0.33) {
+              muteIcon.className = 'fa-solid fa-volume-off'; // Low volume icon
+              muteButton.title = `Volume: ${Math.round(audio.volume * 100)}%`;
+          } else if (audio.volume < 0.66) {
+              muteIcon.className = 'fa-solid fa-volume-low'; // Medium volume icon
+              muteButton.title = `Volume: ${Math.round(audio.volume * 100)}%`;
+          } else {
+              muteIcon.className = 'fa-solid fa-volume-high'; // High volume icon
+              muteButton.title = `Volume: ${Math.round(audio.volume * 100)}%`;
+          }
+      }
+  
+      // Play the audio on load but initially pause it
+      window.addEventListener('load', () => {
+          audio.pause(); // Pause the audio by default
+          graduallyIncreaseVolume();
+          disableButtons(); // Disable buttons while music is paused
+      });
+  
+      // Sync the disc spinning animation with music playback
+      audio.addEventListener('play', () => {
+          audioContainer.classList.remove('paused');
+          enableButtons(); // Enable buttons when the audio plays
+      });
+  
+      audio.addEventListener('pause', () => {
+          audioContainer.classList.add('paused');
+          disableButtons(); // Disable buttons when the audio is paused
+      });
+  
+      // Play/Pause functionality by clicking the disc icon
+      discIcon.addEventListener('click', () => {
+          if (audio.paused) {
+              audio.play();
+              enableButtons(); // Enable buttons when the music starts
+          } else {
+              audio.pause();
+              disableButtons(); // Disable buttons when the music is paused
+          }
+      });
+  
+      // Mute/Unmute functionality
+      muteButton.addEventListener('click', () => {
+          isMuted = !isMuted;
+          audio.muted = isMuted;
+          if (!isMuted) {
+              audio.volume = Math.max(audio.volume, 0.1); // Default to a low volume if unmuting
+          }
+          updateMuteIcon();
+      });
+  
+      // Reset functionality with animation
+      resetButton.addEventListener('click', () => {
+          audio.currentTime = 0;
+          resetButton.style.animation = 'rotate-reset 0.5s linear';
+          resetButton.addEventListener('animationend', () => {
+              resetButton.style.animation = ''; // Reset animation
+          });
+      });
+  
+      // Detect hover side
+      audioContainer.addEventListener('mousemove', (e) => {
+          const containerRect = audioContainer.getBoundingClientRect();
+          const centerX = containerRect.left + containerRect.width / 2;
+          if (e.clientX < centerX) {
+              audioContainer.classList.add('left-hover');
+              audioContainer.classList.remove('right-hover');
+          } else {
+              audioContainer.classList.add('right-hover');
+              audioContainer.classList.remove('left-hover');
+          }
+      });
+  
+      // Reset hover classes when leaving container
+      audioContainer.addEventListener('mouseleave', () => {
+          audioContainer.classList.remove('left-hover', 'right-hover');
+      });
+  
+      // Adjust volume using scroll on the audio container
+      audioContainer.addEventListener('wheel', (e) => {
+          e.preventDefault(); // Prevent default scrolling behavior
+          if (!isMuted) {
+              if (e.deltaY < 0 && audio.volume < 1) {
+                  audio.volume = Math.min(audio.volume + 0.05, 1); // Increase volume
+              } else if (e.deltaY > 0 && audio.volume > 0) {
+                  audio.volume = Math.max(audio.volume - 0.05, 0); // Decrease volume
+              }
+              updateMuteIcon(); // Update the mute button icon based on volume
+          }
+      });
+  
+      // Set titles for reset button and disc icon
+      resetButton.title = 'Reset Music';
+      discIcon.title = 'Play/Pause Music';
+  }
+  
+  // Call the function to initialize the audio player
+  initializeAudioPlayer();
+  
+  
+  
+
+
+  </script>
+
+</body>
+
+</html>
