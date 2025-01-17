@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login and Sign-up Form</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: default, sans-serif;
+        }
+        /* General Styling */
+        .wrapper {
+            --input-focus: #2d8cf0;
+            --font-color: #323232;
+            --font-color-sub: #666;
+            --bg-color: #fff;
+            --bg-color-alt: #666;
+            --main-color: #323232;
+            display: flex;
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+        }
+
+        /* switch card */
+        .switch {
+            transform: translateY(-200px);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            width: 50px;
+            height: 20px;
+        }
+
+        .card-side::before {
+            position: absolute;
+            content: 'Projects';
+            left: -90px;
+            top: 0;
+            width: 100px;
+            text-decoration: underline;
+            color: var(--font-color);
+            font-weight: 600;
+        }
+
+        .card-side::after {
+            position: absolute;
+            content: 'About';
+            left: 70px;
+            top: 0;
+            width: 100px;
+            text-decoration: none;
+            color: var(--font-color);
+            font-weight: 600;
+        }
+
+        .toggle {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            box-sizing: border-box;
+            border-radius: 5px;
+            border: 2px solid var(--main-color);
+            box-shadow: 4px 4px var(--main-color);
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--bg-color);
+            transition: 0.3s;
+        }
+
+        .slider:before {
+            box-sizing: border-box;
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            border: 2px solid var(--main-color);
+            border-radius: 5px;
+            left: -2px;
+            bottom: 2px;
+            background-color: var(--bg-color);
+            box-shadow: 0 3px 0 var(--main-color);
+            transition: 0.3s;
+        }
+
+        .toggle:checked + .slider {
+            background-color: var(--input-focus);
+        }
+
+        .toggle:checked + .slider:before {
+            transform: translateX(30px);
+        }
+
+        .toggle:checked ~ .card-side:before {
+            text-decoration: none;
+        }
+
+        .toggle:checked ~ .card-side:after {
+            text-decoration: underline;
+        }
+
+        /* card */ 
+
+        .flip-card__inner {
+            width: 300px;
+            height: 350px;
+            position: relative;
+            background-color: transparent;
+            perspective: 1000px;
+            text-align: center;
+            transition: transform 0.8s;
+            transform-style: preserve-3d;
+        }
+
+        .toggle:checked ~ .flip-card__inner {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card__front, .flip-card__back {
+            width: 100%;
+            left: -20px;
+            padding: 20px;
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            background: lightgrey;
+            gap: 20px;
+            border-radius: 5px;
+            border: 2px solid var(--main-color);
+            box-shadow: 4px 4px var(--main-color);
+        }
+
+        .flip-card__back {
+            width: 100%;
+            transform: rotateY(180deg);
+        }
+
+        .flip-card__form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .title {
+            margin: 20px 0 20px 0;
+            font-size: 25px;
+            font-weight: 900;
+            text-align: center;
+            color: var(--main-color);
+        }
+
+        .flip-card__input {
+            width: 250px;
+            height: 40px;
+            border-radius: 5px;
+            border: 2px solid var(--main-color);
+            background-color: var(--bg-color);
+            box-shadow: 4px 4px var(--main-color);
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--font-color);
+            padding: 5px 10px;
+            outline: none;
+        }
+
+        .flip-card__input::placeholder {
+            color: var(--font-color-sub);
+            opacity: 0.8;
+        }
+
+        .flip-card__input:focus {
+            border: 2px solid var(--input-focus);
+        }
+
+        .flip-card__btn:active, .button-confirm:active {
+            box-shadow: 0px 0px var(--main-color);
+            transform: translate(3px, 3px);
+        }
+
+        .flip-card__btn {
+            margin: 20px 0 20px 0;
+            width: 120px;
+            height: 40px;
+            border-radius: 5px;
+            border: 2px solid var(--main-color);
+            background-color: var(--bg-color);
+            box-shadow: 4px 4px var(--main-color);
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--font-color);
+            cursor: pointer;
+        }
+
+        /* Creator Info Styling */
+        .creator-info {
+            font-size: 16px;
+            color: var(--font-color);
+            text-align: left;
+            line-height: 1.5;
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            border: 1px solid var(--main-color);
+        }
+
+        .creator-info p {
+            margin: 10px 0;
+            font-size: 10px;
+        }
+
+        .creator-info strong {
+            font-weight: 700;
+            font-size: 12px;
+        }
+
+        .creator-info h2 {
+            font-size: 22px;
+            margin-bottom: 10px;
+            color: var(--main-color);
+        }
+
+        /* Checkmark for valid link */
+        .valid-link {
+            color: green;
+            font-size: 30px;
+            font-weight: bold;
+            margin-top: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="wrapper">
+    <div class="card-switch">
+        <label class="switch">
+            <input class="toggle" type="checkbox">
+            <span class="slider"></span>
+            <span class="card-side"></span>
+            <div class="flip-card__inner">
+                <!-- Login Side -->
+                <div class="flip-card__front">
+                    <div class="title">Project Websites</div>
+                    <form action="" class="flip-card__form">
+                        <input list="websites" placeholder="Select a Website" name="website" class="flip-card__input">
+                        <datalist id="websites">
+                            <option value="Expo 2025">
+                            <option value="Google">
+                            <option value="Facebook">
+                        </datalist>
+                        <button class="flip-card__btn" type="button" onclick="goToWebsite()">Go!</button>
+                        <p>We are not responsible for the websites you visit.</p>
+                        <div class="valid-link" id="validLink">✔</div>
+                    </form>
+                </div>
+
+                <!-- Sign-up Side -->
+                <div class="flip-card__back">
+                    <div class="title">About the Creator</div>
+                    <div class="creator-info">
+                        <h2>John Doe - Website Creator</h2>
+                        <p><strong>Role:</strong> Full Stack Developer</p>
+                        <p><strong>Contact:</strong> john.doe@example.com</p>
+                        <p><strong>About:</strong> John is a passionate developer who loves building interactive and user-friendly websites. He has worked with various web technologies and is always learning new things to enhance his skills.</p>
+                    </div>
+                </div>
+            </div>
+        </label>
+    </div>   
+</div>
+
+<script>
+// Predefined websites
+const validWebsites = {
+    "Expo 2025": "CUexpo2025.html",
+    "Google": "https://www.google.com",
+    "Facebook": "https://www.facebook.com"
+};
+
+// JavaScript to navigate to the selected website
+function goToWebsite() {
+    const inputField = document.querySelector('[name="website"]');
+    const selectedWebsite = inputField.value.trim();
+    const url = validWebsites[selectedWebsite];
+
+    if (url) {
+        showValidLink(inputField, selectedWebsite);
+        // Redirect after short delay to show the valid link process
+        setTimeout(() => {
+            window.location.href = url;
+        }, 2000);
+    } else {
+        inputField.value = ''; // Clear input if invalid
+        inputField.setAttribute("placeholder", "Invalid link");
+    }
+}
+
+// Show valid link message and tick
+function showValidLink(inputField, websiteName) {
+    const validLinkMessage = document.getElementById('validLink');
+    
+    // Clear the input field
+    inputField.value = ''; 
+
+    // Change placeholder to "Going to [Website Name]"
+    inputField.setAttribute("placeholder", "Going to " + websiteName);
+
+    // Display the checkmark icon
+    validLinkMessage.style.display = "block";
+
+    // Hide the checkmark after 2 seconds
+    setTimeout(() => {
+        validLinkMessage.style.display = "none";
+    }, 2000);
+}
+
+// Add event listener to input field to trigger the "Go!" button on Enter key press
+document.querySelector('[name="website"]').addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault(); // Prevent form submission
+        goToWebsite();
+    }
+});
+
+</script>
+</body>
+</html>
